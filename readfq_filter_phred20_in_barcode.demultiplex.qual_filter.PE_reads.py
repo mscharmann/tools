@@ -167,7 +167,8 @@ if __name__ == "__main__":
 		low_q = 0
 		with open(first_reads + ".tmp", "r") as INF1:
 			with open(second_reads + ".tmp", "r") as INF2:
-				for [name1, seq1, qual1], [name2, seq2, qual2] in zip(readfq(INF1),readfq(INF2)):
+				for [name1, seq1, qual1] in readfq(INF1):
+					[name2, seq2, qual2] = readfq(INF2).next()
 					total_entry_count += 1
 					qual1_numeric = [ ord(x) - 33 for x in qual1.rstrip('\n') ] ## from http://pythonforbiologists.com/index.php/business-card-fastq-parser-exercise/
 					qual2_numeric = [ ord(x) - 33 for x in qual2.rstrip('\n') ]
