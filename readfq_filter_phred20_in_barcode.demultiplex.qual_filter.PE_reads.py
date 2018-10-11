@@ -154,7 +154,7 @@ if __name__ == "__main__":
 	drop_no_bc = []
 	drop_low_q = []
 		
-	for k in sorted(barcodes_dict.keys(), key = int)[::-1]: # look for the short ones first	
+	for k in sorted(barcodes_dict.keys(), key = int)[::-1]: # look for the longer ones first	
 	#	with gzip.open(outfile_firstreads, "w") as OUTF:
 	#		with gzip.open(first_reads, "r") as INF:
 		discard1 = open(first_reads + ".discard", "a")
