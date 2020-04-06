@@ -1,0 +1,33 @@
+cd /cluster/project/gdc/people/schamath/tools
+
+tar -xvf phobius101_linux.tar.gz
+
+mkdir phobius1.01
+mv tmp/tmpCeu5vL/phobius/* ./phobius1.01/
+ln -s ./phobius1.01/phobius.pl phobius.pl
+rm -r tmp
+
+# usage:
+PATH=$PATH:/cluster/project/gdc/people/schamath/tools
+
+phobius.pl
+
+
+
+######
+
+
+tar -xvf signalp-4.1e.Linux.tar.gz
+
+# follwing readme. 
+# then:
+ln -s ./signalp-4.1/signalp ./signalp
+
+Usage:
+
+PATH=$PATH:/cluster/project/gdc/people/schamath/tools
+
+signalp -h
+
+# exports a gff file:
+signalp -f short -t euk -n

@@ -1,0 +1,38 @@
+# Rscript_trees_retain_taxa.txt
+
+# usage:
+# Rscript Rscript_trees_retain_taxa.txt intrees_file outtrees_file comma-separated,list,of,taxa,to,keep
+
+library(ape)
+
+args = commandArgs(trailingOnly=TRUE)
+fileName = args[1] ## "RADtag_trees_phylogeny_major_groups.txt"
+outfilename = args[2] ##"RADtag_trees_phylogeny_major_groups.collapsed_polytomies.txt"
+good_taxa = read.csv(text = args[3], sep = ",", header = FALSE,stringsAsFactors = FALSE)
+good_taxa = as.character(good_taxa[1,])
+print(good_taxa )
+
+conn <- file(fileName,open="r")
+linn <-readLines(conn)
+for (i in 1:length(linn)){
+	print(i)
+	intree = read.tree(text = linn[i])
+	
+	to_keep = intersect(intree$tip,good_taxa) # this can be of length <4; so need to discard entirely
+	if (length(to_keep) >= 4) {
+		to_drop = setdiff(intree$tip, to_keep)
+	
+		cleaned_tree = drop.tip(intree, to_drop, trim.internal = TRUE, subtree = FALSE, rooted = is.rooted(intree))
+	
+		write.tree(cleaned_tree, file = outfilename, append = TRUE,
+			   digits = 10, tree.names = FALSE)
+		}
+
+}
+close(conn)
+
+# read-write again to cear issues!?
+indat = read.tree(file = fileName)
+write.tree(indat, file = fileName)
+
+

@@ -1,0 +1,9 @@
+# Rscript_count_internal_nodes.txt
+library(ape)
+args = commandArgs(trailingOnly=TRUE)
+
+mytree <- read.tree( args[1] )
+print( "number of internal nodes in this tree:" )
+print( mytree$Nnode )
+
+

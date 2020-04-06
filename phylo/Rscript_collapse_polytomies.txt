@@ -1,0 +1,25 @@
+# Rscript_collapse_polytomies.txt
+
+# usage:
+# Rscript Rscript_collapse_polytomies.txt intrees_file outtrees_file
+
+library(geiger)
+
+args = commandArgs(trailingOnly=TRUE)
+fileName = args[1] ## "RADtag_trees_phylogeny_major_groups.txt"
+outfilename = args[2] ##"RADtag_trees_phylogeny_major_groups.collapsed_polytomies.txt"
+
+conn <- file(fileName,open="r")
+linn <-readLines(conn)
+for (i in 1:length(linn)){
+	print(i)
+	intree <- read.tree(text = linn[i])
+	collapsed_polytomies <- di2multi(intree, 0.00001)
+
+	write.tree(collapsed_polytomies, file = outfilename, append = TRUE,
+           digits = 10, tree.names = FALSE)
+
+}
+close(conn)
+
+
