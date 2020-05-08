@@ -30,7 +30,10 @@ def cds_aln_from_aa_aln_and_cds_unalign ( aa_aln_file, cds_unalign_infile ):
 	for id, seq in aa_seqs.items():
 		aln_vs_raw_dict[ id ] = [ seq ]
 	for id, seq in cds_unaligned_seqs.items():
-		aln_vs_raw_dict[ id ].append( seq )
+		try:
+			aln_vs_raw_dict[ id ].append( seq )
+		except KeyError:
+			None
 	
 	out_lines = []
 	for name, v in aln_vs_raw_dict.items():
