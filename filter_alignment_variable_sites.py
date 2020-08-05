@@ -54,36 +54,23 @@ def read_wrapped_or_unwrapped_fasta (infile):
 	return out_dict
 
 
-def filter_columns(msa_dict, min_pres, min_sites_retain_tax):
-	the_taxorder = list( msa_dict.keys() )
-	
-
-	thresh = int(min_pres*len(the_taxorder))
-	
+# get varpos:
+def find_varpos_msa_dict(msa_dict):
+	the_taxorder = msa_dict.keys()
 	the_list = []
-	for i in range(0, len(msa_dict.values()[0])):
-#		print i, len(msa_dict.values()[0])
+	for i in range(0, len(msa_dict[msa_dict.keys()[0]])):
 		column = "".join( [msa_dict[tax][i] for tax in the_taxorder] )
-		column = column.replace("-","")
-		if len(column) >= thresh:
-			the_list.append(i)
-	
-	
-	print "surviving columns = ", len(the_list), round(float(len(the_list))/float(len(msa_dict.values()[0])),6)
-	
+		if len( set(column.replace("-", "")) ) > 1:
+			the_list.append(column)
 	out_dict = {}
-	
-	taxcnt = 0
-	
 	for idx, tax in enumerate(the_taxorder):
-#		print tax
-		outstr = "".join( [msa_dict[tax][i] for i in the_list] )		
-		if len(outstr.replace("-","")) >= min_sites_retain_tax: # drop taxa that lost almost everyting
-			out_dict[tax] = outstr
-			taxcnt += 1
-			
-	print "surviving taxa = ", taxcnt, round(float(taxcnt)/float(len(msa_dict.keys())),6) 
+		outstr = ""
+		for i in range(0, len(the_list) ): 
+			outstr += the_list[i][idx]
+		out_dict[tax] = outstr
 	return out_dict
+
+
 
 def write_phylip (concat_dict, outfile):
 	
@@ -116,13 +103,7 @@ if not file_format in ["fasta", "phylip"]:
 	print "allowed file formats are 'fasta' and 'phylip'"
 	exit()
 
-if not len(sys.argv) == 5:
-	print "usage: python script.py file_format infile min_pres min_sites_retain_tax"
-	exit()
-
 infile=sys.argv[2]
-min_pres = float(sys.argv[3])
-min_sites_retain_tax = int(sys.argv[4])
 
 if file_format == "phylip":
 	input = read_phylip(infile)
@@ -130,11 +111,14 @@ else:
 	input = read_wrapped_or_unwrapped_fasta(infile)
 
 
-out_dict = filter_columns(input, min_pres, min_sites_retain_tax)
+out_dict = find_varpos_msa_dict(input)
+
+print "input sites:	", len(input.values()[0])
+print "output variable sites:	", len(out_dict.values()[0])
 
 if file_format == "phylip":
-	write_phylip (out_dict, "{0}.mincolpres_{1}.phy".format(infile, sys.argv[3]))
+	write_phylip (out_dict, "{0}.varpos.phy".format(infile))
 else:
-	write_fasta (out_dict, "{0}.mincolpres_{1}.fasta".format(infile, sys.argv[3]))
+	write_fasta (out_dict, "{0}.varpos.fasta".format(infile))
 
 print "Done!"
