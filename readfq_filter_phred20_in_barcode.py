@@ -1,13 +1,37 @@
 # readfq_filter_phred20_in_barcode.py
+# a python script that reads single-end Illumina fastq data from STDIN and outputs only reads that have Phred >= 20 in each of the first five bases of the read.
+# Copyright (C) 2017, ETH Zurich, Mathias Scharmann
+# 
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# 		
+# If you use this code please cite:
+#
+# "Scharmann M, Grafe TU, Metali F, Widmer A. (2017) Sex-determination 
+# and sex chromosomes are shared across the radiation of dioecious 
+# Nepenthes pitcher plants. XXX"
+# AND/OR
+# "Scharmann M, Metali F, Grafe TU, Widmer A. (2017) Divergence with 
+# gene flow among multiple sympatric carnivorous Nepenthes pitcher 
+# plants is linked to trap morphology. XXX"
+# 	
+# contact: mathias.scharmann[-at-]env.ethz.ch or msph52[-at-]gmail.com
 
-# Mathias Scharmann
-# fq parser downloaded
-# 04 Oct 2016
+
 # python 2.7
-
 # pipe *.fq files into script, filters for phred >= 20 in each of the first 5 bases, writes surviving entries to STDOUT
 # example usage :
-#	zcat 20151211.A-ddRAD_Nph_1_R1.adaptertrim.fq.gz | head -1000000 | python readfq_filter_phred20_in_barcode.py | gzip > fufu.fq.gz
+#	zcat ddRAD_Nph_1_R1.adaptertrim.fq.gz | python readfq_filter_phred20_in_barcode.py | gzip > fufu.fq.gz
 
 
 
@@ -15,6 +39,7 @@ import sys
 
 
 def readfq(fp): # this is a generator function
+	## from: https://github.com/lh3/readfq/blob/master/readfq.py (NO LICENCE)
     last = None # this is a buffer keeping the last unprocessed line
     while True: # mimic closure; is it a bad idea?
         if not last: # the first record or a record following a fastq

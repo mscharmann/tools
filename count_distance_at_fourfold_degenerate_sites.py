@@ -1,5 +1,6 @@
 
 import sys
+import gzip
 
 """
 takes a phylip alignment of codons (!) and extracts 4-fold degenerate sites, returns as phylip format!
@@ -46,11 +47,18 @@ def check_if_fourfold_degenerate (codon_list):
 def read_phylip(INFILE):
 	
 	indict = {}
-	with open(INFILE, "r") as infile:
-		infile.readline() # remove header
-		for line in infile:
-			fields = line.strip("\n").split()
-			indict[fields[0]] = fields[1]
+	
+	if INFILE.endswith(".gz"):
+		infile = gzip.open(INFILE, "r")
+	else:
+		infile = open(INFILE, "r")
+
+
+	infile.readline() # remove header
+	for line in infile:
+		fields = line.strip("\n").split()
+		indict[fields[0]] = fields[1]
+	infile.close()
 
 	return indict
 
