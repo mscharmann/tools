@@ -9,7 +9,7 @@ conda install bwa mawk samtools freebayes parallel bedtools bcftools python2.7 r
 
 ## 1. read mapping
 
-Prepare a directory with the organelle reference fasta (here named "reference.fasta") and fastq files of the samples (here with suffices ".fq.gz"). Then:
+Prepare a directory with the organelle reference fasta (here named "reference.fasta") and fastq files of the samples (here with prefix "sample_" and suffix ".fq.gz"; some parts of the workflow rely on these pre- and suffices). Then:
 
 ```
 bwa index reference.fasta
