@@ -1,6 +1,6 @@
 # workflow for organellar phylogeny from reduced-representation data (RAD, ddRAD, GBS etc)
 
-ddRAD and related methods are now routinely used to build phylogenies, but it is usually not considered that the sequenced loci are actually a mixture of nuclear and organellar loci. As the organellar loci are almost certainly orders of magnitude fewer, thjeir contribution to an indiscriminate multi-locus phylogeny is probvably neglegible and the result is essentially a nuclear phylogeny. However, organellar phylogenies can be of special interest. This workflow shows how to use ddRAD (or GBS, or...) reads originating from organellar genomes to generate specific organellar phylogenies. It relies on the availability of an organellar reference assembly for the lineage. Some code snippets taken from dDocent <https://github.com/jpuritz/dDocent> by J. Puritz.
+ddRAD and related methods are now routinely used to build phylogenies, but it is usually not considered that the sequenced loci are actually a mixture of nuclear and organellar loci. As the organellar loci are almost certainly orders of magnitude fewer, thjeir contribution to an indiscriminate multi-locus phylogeny is probvably neglegible and the result is essentially a nuclear phylogeny. However, organellar phylogenies can be of special interest. This workflow shows how to use ddRAD (or GBS, or...) reads originating from organellar genomes to generate specific organellar phylogenies. It relies on the availability of an organellar reference assembly for the lineage. Some code snippets taken from dDocent <https://github.com/jpuritz/dDocent> by J. Puritz. Uses bash, python and R.
 
 
 dependencies may be installed through conda:
@@ -71,8 +71,7 @@ freebayes -L inbamlist -v raw.vcf -f reference.fasta --ploidy 1 -m 5 -q 5 -E 3 -
 ```
 
 
-## 4. APPLY SNPs TO FASTA REFERENCE & MASK MISSING SITES
-
+## 4. apply variants to fasta reference & mask missing sites
 
 make a low-coverage .bed file for each sample; here any region with less than 3 mapped reads is detected and will be counted as missing data ("-" character in final alignment). 
  
