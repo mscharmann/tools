@@ -74,7 +74,7 @@ freebayes -L inbamlist -v raw.vcf -f reference.fasta --ploidy 1 -m 5 -q 5 -E 3 -
 ## 4. APPLY SNPs TO FASTA REFERENCE & MASK MISSING SITES
 
 
-make a low-coverage .bed file for each sample
+make a low-coverage .bed file for each sample; here any region with less than 3 mapped reads is detected and will be counted as missing data ("-" character in final alignment). 
  
 ```
 parallel --jobs 20 "genomeCoverageBed -ibam {} -g ./reference.fasta -bga -split | awk '{ if (\$4<3) print}' > {}_regions_below_depth_3.bed" ::: $(ls *.bam)
