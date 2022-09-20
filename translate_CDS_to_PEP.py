@@ -59,7 +59,7 @@ def translate ( cds_file ):
 ####
 
 if len(sys.argv) != 2:
-	print "usage: python translate_CDS_to_PEP.py cds_fasta"
+	print ("usage: python translate_CDS_to_PEP.py cds_fasta")
 	exit()
 	
 translate(sys.argv[1])

@@ -59,7 +59,7 @@ def cds_aln_from_aa_aln_and_cds_unalign ( aa_aln_file, cds_unalign_infile ):
 ####
 
 if len(sys.argv) != 3:
-	print "usage: python backtranslate.py aa_aln_file cds_unalign_infile"
+	print ("usage: python backtranslate.py aa_aln_file cds_unalign_infile")
 	exit()
 	
 cds_aln_from_aa_aln_and_cds_unalign(sys.argv[1],sys.argv[2])
