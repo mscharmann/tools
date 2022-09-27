@@ -30,9 +30,10 @@ conda install -c conda-forge "openjdk=11"
 ```
 
 
-get the predicted AAs:
+get the predicted AAs; if necessary filter this fasta file to retain only the longest transcript isoform per gene:
 ```
 cp ../A_spectabilis_BRAKER_annotation.2021-10/wd_braker/augustus.hints.aa ./
+python filter_longest_isoform.py augustus.hints.aa
 ```
 ## Setup BLAST databases
 get Arabodopsis genes: (TAIR)
@@ -98,7 +99,7 @@ InterProscan options to use:
 ```
 nchunks = 90
 chunks = range(0,nchunks) 
-queryfile = "augustus.hints.aa"
+queryfile = "augustus.hints.aa.longest_isoform.fa"
 
 rule all:
 	input:
@@ -250,10 +251,10 @@ ln -s ../A_spectabilis_BRAKER_annotation.2021-10/wd_braker/augustus.hints.gtf ./
 ## Collect all annotations into a TAB file
 may have to modify some inut file names in the script ```collect_annotations.py```
 ```
-python collect_annotations.py augustus.hints.aa
+python collect_annotations.py augustus.hints.aa.longest_isoform.fa
 ```
 ### final result:
-```augustus.hints.aa.functional_annotations.txt```
+```augustus.hints.aa.longest_isoform.fa.functional_annotations.txt```
 
 ## clean up
 ```
