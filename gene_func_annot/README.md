@@ -28,8 +28,8 @@ conda activate func_annot
 conda install seqtk snakemake samtools blast gffread bedtools ant -y
 conda install -c conda-forge "openjdk=11"
 
-wget https://github.com/mscharmann/tools/blob/master/gene_func_annot/collect_annotations.py
-wget https://github.com/mscharmann/tools/blob/master/gene_func_annot/filter_longest_isoform.py
+wget https://raw.githubusercontent.com/mscharmann/tools/master/gene_func_annot/collect_annotations.py
+wget https://raw.githubusercontent.com/mscharmann/tools/master/gene_func_annot/filter_longest_isoform.py
 
 ```
 
