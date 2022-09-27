@@ -42,12 +42,12 @@ python filter_longest_isoform.py augustus.hints.aa
 ## Setup BLAST databases
 get Arabodopsis genes: (TAIR)
 ```
-wget --no-check-certificate https://www.arabidopsis.org/download_files/Genes/Araport11_genome_release/Araport11_blastsets/Araport_pep_20220119_representative_gene_model.gz
-gunzip -c Araport_pep_20220119_representative_gene_model.gz > Araport_pep_20220119_representative_gene_model.pep.fasta
+wget --no-check-certificate https://www.arabidopsis.org/download_files/Genes/Araport11_genome_release/Araport11_blastsets/archived/2022/Jan192022/Araport_pep_20220119_representative_gene_model.gz
+gunzip -c Araport_pep_20220119_representative_gene_model.gz > tmp.pep
 ```
-the fasta headers have some bad chars; replace them.
+the fasta headers may have some bad chars; replace them.
 ```
-cat Araport_pep_20220119_representative_gene_model.pep.fasta | sed 's/\xC3/_/g' | sed 's/\xB3/_/g' | sed 's/\x83/_/g' | sed 's/\xC2/_/g' | sed 's/\x82/_/g' | sed 's/\xA0/_/g' | sed 's/\xAD/_/g' | sed 's/\x9F/_/g' > TAIR.fasta
+cat tmp.pep | sed 's/\xC3/_/g' | sed 's/\xB3/_/g' | sed 's/\x83/_/g' | sed 's/\xC2/_/g' | sed 's/\x82/_/g' | sed 's/\xA0/_/g' | sed 's/\xAD/_/g' | sed 's/\x9F/_/g' > TAIR.fasta
 ```
 make blast database
 ```
@@ -55,7 +55,7 @@ makeblastdb -in TAIR.fasta -dbtype prot -out TAIR
 ```
 cleanup:
 ```
-rm Araport_pep_20220119_representative_gene_model.pep.fasta
+rm tmp.pep
 ```
 
 get SwissProt: https://www.uniprot.org/downloads#uniprotkblink
