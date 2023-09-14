@@ -41,9 +41,15 @@ python filter_longest_isoform.py augustus.hints.aa
 ```
 ## Setup BLAST databases
 get Arabodopsis genes: (TAIR)
+previously used https://www.arabidopsis.org/download_files/Genes/Araport11_genome_release/Araport11_blastsets/archived/2022/Jan192022/Araport_pep_20220119_representative_gene_model.gz
+BUT THIS FILE IS CORRUPTED; predicted peptides are garbled and with amny stop-codons; there was probably an error on the side of the creator of this gene prediction!!!
+
+
+Now use:
 ```
-wget --no-check-certificate https://www.arabidopsis.org/download_files/Genes/Araport11_genome_release/Araport11_blastsets/archived/2022/Jan192022/Araport_pep_20220119_representative_gene_model.gz
-gunzip -c Araport_pep_20220119_representative_gene_model.gz > tmp.pep
+wget --no-check-certificate wget --no-check-certificate https://www.arabidopsis.org/download_files/Proteins/Araport11_protein_lists/Araport11_pep_20220914_representative_gene_model.gz
+gunzip -c Araport11_pep_20220914_representative_gene_model.gz > tmp.pep
+
 ```
 the fasta headers may have some bad chars; replace them.
 ```
@@ -102,7 +108,7 @@ InterProscan options to use:
 # Snakefile
 ```
 nchunks = 90
-chunks = range(0,nchunks) 
+chunks = range(0,nchunks)
 queryfile = "augustus.hints.aa.longest_isoform.fa"
 
 rule all:
@@ -204,14 +210,14 @@ rule split_query_file:
 		"""
 		samtools faidx {input}
 		cat {input}.fai | awk '{{print $1"\t0\t"$2}}' > fasta.bed
-		
+
 		# Work out lines per file.
 		total_lines=$(wc -l <fasta.bed)
 		((lines_per_file = (total_lines + {params.num_files} - 1) / {params.num_files}))
-		
+
 		# Split the actual file, maintaining lines.
 		split -d --lines=$lines_per_file fasta.bed chunk_
-		
+
 		mv chunk_00 chunk_0
 		mv chunk_01 chunk_1
 		mv chunk_02 chunk_2
@@ -222,12 +228,12 @@ rule split_query_file:
 		mv chunk_07 chunk_7
 		mv chunk_08 chunk_8
 		mv chunk_09 chunk_9
-		
-		# get fasta seqs and remove ">ID:1-XX" appended to SEqID headers by seqtk 
+
+		# get fasta seqs and remove ">ID:1-XX" appended to SEqID headers by seqtk
 		for x in $(ls chunk_* ); do
 			seqtk subseq {input} $x | sed "s/:1-[0-9]*//g" > $x.fasta
 		done
-	
+
 		"""
 ```
 
@@ -265,4 +271,3 @@ python collect_annotations.py augustus.hints.aa.longest_isoform.fa
 rm uniprot_sprot.fasta*  TAIR* interpro2go tair.gaf.gz goa_uniprot*  Araport_pep_20220119_representative_gene_model.gz Ath_TF_list.txt.gz Araport_pep_20220119_representative_gene_model.pep.fasta
 rm -rf my_interproscan
 ```
-

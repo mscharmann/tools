@@ -32,9 +32,9 @@ wget http://planttfdb.gao-lab.org/download/TF_list/Ath_TF_list.txt.gz
 
 
 def parse_all_protein_IDs (infasta):
-	
+
 	print("parsing input fasta ", infasta)
-	
+
 	all_IDs = set()
 	with open(infasta, "r") as I:
 		for line in I:
@@ -45,27 +45,27 @@ def parse_all_protein_IDs (infasta):
 
 
 def parse_TF_database (infile):
-	
+
 	# besthit by evalue.
-	
+
 	print("parsing transcription factor database ", infile)
-	
+
 	ATids_to_TFs = {}
 	with gzip.open(infile, "rt") as I:
 		for line in I:
 			if len(line) > 1:
 				fields = line.strip("\n").split("\t")
 				ATids_to_TFs[fields[1]] = fields[2]
-	
+
 	return(ATids_to_TFs)
 
 
 def parse_blast_besthit (infile):
-	
+
 	# besthit by evalue.
-	
+
 	print("parsing BLAST hits ", infile)
-	
+
 	blast_besthits = {}
 	with gzip.open(infile, "rt") as I:
 		for line in I:
@@ -82,16 +82,16 @@ def parse_blast_besthit (infile):
 							blast_besthits[qid] = [hit_id, bitscore]
 					except KeyError:
 						blast_besthits[qid] = [hit_id, bitscore]
-	
-	return(blast_besthits)	
+
+	return(blast_besthits)
 
 
 def	parse_TAIR_GAF_for_human_readable_description_and_GO_terms (gaf_infile):
-	
+
 	# http://geneontology.org/docs/go-annotation-file-gaf-format-2.1/
-	
+
 	print("parsing TAIR GAF ", gaf_infile)
-	
+
 	ids_and_description = {}
 	ids_and_GOs = {}
 	with gzip.open(gaf_infile, "rt") as I:
@@ -103,21 +103,21 @@ def	parse_TAIR_GAF_for_human_readable_description_and_GO_terms (gaf_infile):
 					ids_and_GOs[ fields[1] ].append(fields[4])
 				except KeyError:
 					ids_and_GOs[ fields[1] ] = [fields[4]]
-	
+
 	tmp = {}
 	for k,v in ids_and_GOs.items():
 		tmp[k] = ",".join(list(set(v)))
-	
-	
+
+
 	return(ids_and_description,tmp)
-		
+
 
 def	parse_uniprot_GAF_for_human_readable_description_and_GO_terms (gaf_infile):
-	
+
 	# http://geneontology.org/docs/go-annotation-file-gaf-format-2.1/
-	
+
 	print("parsing Uniprot GAF ", gaf_infile)
-	
+
 	ids_and_description = {}
 	ids_and_GOs = {}
 	with gzip.open(gaf_infile, "rt") as I:
@@ -129,19 +129,19 @@ def	parse_uniprot_GAF_for_human_readable_description_and_GO_terms (gaf_infile):
 					ids_and_GOs[ fields[1] ].append(fields[4])
 				except KeyError:
 					ids_and_GOs[ fields[1] ] = [fields[4]]
-	
+
 	tmp = {}
 	for k,v in ids_and_GOs.items():
 		tmp[k] = ",".join(list(set(v)))
-	
-	
+
+
 	return(ids_and_description,tmp)
 
 
 def parse_interproscan_hits (infile):
-	
+
 	print("parsing InterProscan hits ", infile)
-	
+
 	ipr_hits = {}
 	with gzip.open(infile, "rt") as I:
 		for line in I:
@@ -152,7 +152,7 @@ def parse_interproscan_hits (infile):
 				descr = fields[12]
 				if ipr_hit != "-":
 					try:
-						ipr_hits[qid].append( ipr_hit + " (" + descr + ")" ) 
+						ipr_hits[qid].append( ipr_hit + " (" + descr + ")" )
 					except KeyError:
 						ipr_hits[qid] = [ ipr_hit + " (" + descr + ")" ]
 
@@ -160,14 +160,14 @@ def parse_interproscan_hits (infile):
 	for k,v in ipr_hits.items():
 		tmp[k] = "; ".join(list(set(v)))
 
-	
-	return(tmp)	
+
+	return(tmp)
 
 
 def parse_interpro_GOs (infile):
-	
+
 	print("parsing InterPro GOs ", infile)
-	
+
 	ids_and_GOs = {}
 	with open(infile, "r") as I:
 		for line in I:
@@ -179,19 +179,19 @@ def parse_interpro_GOs (infile):
 					ids_and_GOs[ id ].append(go)
 				except KeyError:
 					ids_and_GOs[ id ] = [go]
-	
+
 	tmp = {}
 	for k,v in ids_and_GOs.items():
 		tmp[k] = ",".join(list(set(v)))
-	
-	
+
+
 	return(tmp)
 
 
 def parse_GTF (infile):
-	
+
 	print("parsing GTF ", infile)
-	
+
 	genes_to_coords_dict = {}
 	with open(infile, "r") as I:
 		for line in I:
@@ -201,8 +201,9 @@ def parse_GTF (infile):
 					c = fields[0]
 					s = fields[3]
 					e = fields[4]
+					orientation = fields[6]
 					gene = fields[8].split()[3].strip('"')
-					genes_to_coords_dict[gene] = "\t".join([c,s,e])
+					genes_to_coords_dict[gene] = "\t".join([c,s,e,orientation])
 
 	return(genes_to_coords_dict)
 
@@ -232,9 +233,9 @@ ipr_GOs = parse_interpro_GOs ("interpro2go")
 print("collecting output")
 
 outlines = []
-outlines.append("\t".join(["query_ID","chr","start","end","BLAST_hit_TAIR","TAIR_description","AT_transcription_factor_family","BLAST_hit_SwissProt","SwissProt_description","InterProscan_hits_(Description)","TAIR_GOterms","SwissProt_GOterms","InterProscan_GOs"]))
+outlines.append("\t".join(["query_ID","chr","start","end","orientation","BLAST_hit_TAIR","TAIR_description","AT_transcription_factor_family","BLAST_hit_SwissProt","SwissProt_description","InterProscan_hits_(Description)","TAIR_GOterms","SwissProt_GOterms","InterProscan_GOs"]))
 for s in input_seqids:
-	coords = genes_to_coords_dict[ ".".join(s.split(".")[:-1]) ]
+	coords = genes_to_coords_dict[ s ]
 	try:
 		tairhit = TAIR_besthits[s][0].split(".")[0]
 	except KeyError:
@@ -278,10 +279,10 @@ for s in input_seqids:
 		if len(ipr_gos) > 0:
 			iprgos_out = ",".join( list(set(",".join(ipr_gos).split(","))) )
 		else:
-			iprgos_out = ""	 		
+			iprgos_out = ""
 	else:
 		iprgos_out = ""
-	
+
 	if tairhit != "NA":
 		try:
 			TF_fam = ATids_to_TFs[tairhit]
@@ -289,17 +290,14 @@ for s in input_seqids:
 			TF_fam = ""
 	else:
 		TF_fam = ""
-		
-	
+
+
 	outline = "\t".join([s,coords,tairhit,tair_descr,TF_fam,sprot_hit,sprot_descr,ipr_hits,tgs,spgs,iprgos_out])
 	outlines.append(outline)
-	
-	
 
-with open(sys.argv[1] + ".functional_annotations.txt", "w") as O:
+
+
+with open(sys.argv[1] + ".functional_annotations.2.txt", "w") as O:
 	O.write( "\n".join(outlines) + "\n" )
 
 print ("Done!")
-
-	
-	
