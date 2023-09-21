@@ -10,9 +10,10 @@ inputs:
 - list of candidate parent IDs
 - list of progeny IDs 
 
-output:
+output2:
 - a matrix of allele sharing between progenies and each candidate parent, specifically:
 	the proportion of sites where a progeny shares one or more alleles with the candidate parent
+- the same matrix but instead with RANKS: ascending order from highest proportion to lowest.	
 
 a match is defined as sharing at least one allele with the candidate parent at a given site.
 a mismatch is defined as not sharing any alleles with the candidate parent at a given site.
@@ -123,7 +124,7 @@ def count_allele_sharing_and_mismatch (vcf, progeny, candidate_parent):
 					matches += 1
 				else: # progeny does not have at least one of the parents alleles...
 					mismatches += 1
-	return (round(matches /float(matches + mismatches), 5))
+	return (round(matches /float(matches + mismatches), 10))
 	
 
 
@@ -143,21 +144,36 @@ print ("parents = ", potential_parents)
 print ("progeny = ", progeny)
 
 
-outlines = []
-outlines.append( "proportion of sites where a progeny shares one or more alleles with the candidate parent" )
-outlines.append( "\t".join([ "progeny_ID" ] + potential_parents) )
+outlines1 = []
+outlines1.append( "proportion of sites where a progeny shares one or more alleles with the candidate parent" )
+outlines1.append( "\t".join([ "progeny_ID" ] + potential_parents) )
+outlines2 = []
+outlines2.append( "potential parents ranked by matching proportion, 1 = highest matching proportion" )
+outlines2.append( "\t".join([ "progeny_ID" ] + potential_parents) )
+
 for prog in progeny:
 	candidate_parent_matches = []
 	for par in potential_parents:
 		proportion_matches = count_allele_sharing_and_mismatch (args.vcf, prog, par)
 		candidate_parent_matches.append( proportion_matches )
 	print(prog, candidate_parent_matches)
-	outlines.append(  "\t".join( [prog] + [str(x) for x in candidate_parent_matches ] ) )
+	outlines1.append(  "\t".join( [prog] + [str(x) for x in candidate_parent_matches ] ) )
+	# now the ranks: https://stackoverflow.com/questions/3071415/efficient-method-to-calculate-the-rank-vector-of-a-list-in-python
+	ranked = [sorted(candidate_parent_matches).index(x) for x in candidate_parent_matches]
+	ranked1 = [abs(x-max(ranked))+1 for x in ranked] # make the rankes ascending
+	outlines2.append(  "\t".join( [prog] + [str(x) for x in ranked1 ] ) )
 
 
 
-with open("parentage_check_output.txt", "w") as O:
-	O.write("\n".join(outlines) + "\n")
+
+
+with open("parentage_check.proportion_matches.txt", "w") as O:
+	O.write("\n".join(outlines1) + "\n")
+
+
+
+with open("parentage_check.ranks.txt", "w") as O:
+	O.write("\n".join(outlines2) + "\n")
 
 
 print ("Done!")
