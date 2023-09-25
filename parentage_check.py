@@ -82,15 +82,8 @@ def read_sample_list (infile):
 	return list(set(sample_list))
 	
 
-def count_allele_sharing_and_mismatch (vcf, progeny, candidate_parent):
-	
-	with open(vcf, "r") as INFILE:
-		for line in INFILE:
-			if line.startswith("##"):
-				continue
-			if line.startswith("#"):
-				header_line = line.lstrip("#").strip("\n").split("\t")	
-				break
+def count_allele_sharing_and_mismatch (header_line, vcf_data, progeny, candidate_parent):
+
 	
 	prog_i = header_line.index(progeny)
 	par_i = header_line.index(candidate_parent)
@@ -103,7 +96,37 @@ def count_allele_sharing_and_mismatch (vcf, progeny, candidate_parent):
 	
 	# now start the main business of walking through the vcf:	
 	out_columns = []
-	with open(vcf, "r") as INFILE:
+
+	linecnt = 0
+	snpcnt = 0
+	for fields in vcf_data:
+		alleles_prog = set( fields[prog_i].split(":")[0].split("/") )
+		alleles_par = set( fields[par_i].split(":")[0].split("/") )
+		alleles_both = alleles_par.union(alleles_prog)
+		# drop missing then count match or mismatch
+		# print (alleles_prog, alleles_par, alleles_both)
+		if not "." in alleles_both:
+			if len( alleles_prog.intersection(alleles_par) ) > 0:
+				matches += 1
+			else: # progeny does not have at least one of the parents alleles...
+				mismatches += 1
+	return (round(matches /float(matches + mismatches), 10))
+	
+
+
+def read_vcf_to_memory(infile):
+	
+	with open(infile, "r") as INFILE:
+		for line in INFILE:
+			if line.startswith("##"):
+				continue
+			if line.startswith("#"):
+				header_line = line.lstrip("#").strip("\n").split("\t")	
+				break
+
+	# now start the main business of walking through the vcf:	
+	vcf_data = []
+	with open(infile, "r") as INFILE:
 		
 		linecnt = 0
 		snpcnt = 0
@@ -114,19 +137,11 @@ def count_allele_sharing_and_mismatch (vcf, progeny, candidate_parent):
 			if len(line) < 2: # empty lines or so
 				continue
 			fields = line.strip("\n").split("\t")
-			alleles_prog = set( fields[prog_i].split(":")[0].split("/") )
-			alleles_par = set( fields[par_i].split(":")[0].split("/") )
-			alleles_both = alleles_par.union(alleles_prog)
-			# drop missing then count match or mismatch
-			# print (alleles_prog, alleles_par, alleles_both)
-			if not "." in alleles_both:
-				if len( alleles_prog.intersection(alleles_par) ) > 0:
-					matches += 1
-				else: # progeny does not have at least one of the parents alleles...
-					mismatches += 1
-	return (round(matches /float(matches + mismatches), 10))
-	
+			vcf_data.append(fields)
 
+	print("parsed VCF into memory")
+	return header_line, vcf_data
+	
 
 
 ####### MAIN
@@ -144,6 +159,9 @@ print ("parents = ", potential_parents)
 print ("progeny = ", progeny)
 
 
+header_line, vcf_data = read_vcf_to_memory(args.vcf)
+
+
 outlines1 = []
 outlines1.append( "proportion of sites where a progeny shares one or more alleles with the candidate parent" )
 outlines1.append( "\t".join([ "progeny_ID" ] + potential_parents) )
@@ -154,7 +172,7 @@ outlines2.append( "\t".join([ "progeny_ID" ] + potential_parents) )
 for prog in progeny:
 	candidate_parent_matches = []
 	for par in potential_parents:
-		proportion_matches = count_allele_sharing_and_mismatch (args.vcf, prog, par)
+		proportion_matches = count_allele_sharing_and_mismatch (header_line, vcf_data, prog, par)
 		candidate_parent_matches.append( proportion_matches )
 	print(prog, candidate_parent_matches)
 	outlines1.append(  "\t".join( [prog] + [str(x) for x in candidate_parent_matches ] ) )
@@ -166,16 +184,18 @@ for prog in progeny:
 
 
 
-
-with open("parentage_check.proportion_matches.txt", "w") as O:
+print ("\n[finishing] writing outputs to:")
+with open(args.vcf + ".parentage_check.proportion_matches.txt", "w") as O:
 	O.write("\n".join(outlines1) + "\n")
 
 
 
-with open("parentage_check.ranks.txt", "w") as O:
+with open(args.vcf + ".parentage_check.ranks.txt", "w") as O:
 	O.write("\n".join(outlines2) + "\n")
 
 
+print (args.vcf + ".parentage_check.proportion_matches.txt")
+print (args.vcf + ".parentage_check.ranks.txt")
 print ("Done!")
 	
 
