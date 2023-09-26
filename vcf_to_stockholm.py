@@ -106,8 +106,8 @@ def parse_vcf(vcf_file):
 			column = ""			
 			variants = [fields[3]] + fields[4].split(",") 
 			# print progress every 10k sites  only
-#			if (snpcnt / 10000.0).is_integer(): 
-#				print ("processed " + str(snpcnt) + " SNPs")
+			if (snpcnt / 10000.0).is_integer(): 
+				print ("processed " + str(snpcnt) + " SNPs")
 
 			for sample in samples:
 				idxes = [int(x) for x in fields[samples_vcf_idx[sample]].split(":")[0].split("/") if not x == "." ]					
@@ -160,17 +160,14 @@ def get_IUPAC_amb_code (nucs):
 	# the keys in this IUPAC ambiguity code dictionary are produced by:
 	# "".join(sorted(list("NUCLEOTIDES"))) -> consistent lookup possible without additional loops!
 	combs = {'AC':'M', 'GT':'K', 'CG':'S', 'AT':'W', 'AG':'R', 'CT':'Y',
-	'ACG':'V', 'CGT':'B', 'AGT':'D', 'ACT':'H', 'ACGT':'N'
+	'ACG':'V', 'CGT':'B', 'AGT':'D', 'ACT':'H', 'ACGT':'N','AA':'A','TT':'T','CC':'C','GG':'G','NN':'N'
 	}
 
-	if len(set(nucs)) > 1:
-		# sometimes theres already an N, so need to except that and return N instead!
-		try:		
-			out_code = combs[nucs]
-		except KeyError:
-			out_code = "N"
-	else:
-		out_code = list(nucs)[0]
+	try:		
+		out_code = combs[nucs]
+	except KeyError:
+		out_code = "N"
+	
 	return out_code
 				
 ################################## MAIN
