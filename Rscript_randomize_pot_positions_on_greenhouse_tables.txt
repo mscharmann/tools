@@ -1,0 +1,79 @@
+
+# at start, pots are arranged in a square grid.
+# each pot is assigned an ID based on its original position in the grid
+# pots are given rnadom new positions, such that each pot is moved at most once; pot positions are simply swapped!
+# returns a grid with the same dimensions and pots in their new positions; each grid cell has one pot id, i.e. the original position of that pot 
+
+
+# specify dimensions of square grid
+number_of_rows = 14
+number_of_columns = 16
+
+
+# construct grid
+mydata <- data.frame(seq(1,number_of_rows)) 
+
+for (i in seq(2,number_of_columns)) {
+mydata <- cbind(mydata, mydata[,1])
+
+}
+
+colnames(mydata) <- LETTERS[1: number_of_columns]
+
+
+for (i in seq(1,number_of_columns)) {
+mydata[,i] <- paste(LETTERS[i], mydata[,i], sep = "")
+
+}
+
+
+
+##### now randomize position:
+
+moved_already <- c()
+mydata_old <- mydata
+mydata_new <- mydata
+for (i in seq(1,number_of_columns)) {
+	for (j in seq(1,number_of_rows)) {
+		# only move away if not already moved away
+		if (!(mydata_old[j,i] %in% moved_already )) {
+			# only move to where no movement yet: draw possible targets until found one that has not been moved before.
+			new_col = sample(seq(1,number_of_columns), 1)
+			new_row = sample(seq(1,number_of_rows), 1)
+			theor_id = paste(LETTERS[new_col], new_row, sep = "")
+			while (theor_id %in% moved_already) {
+				new_col = sample(seq(1,number_of_columns), 1)
+				new_row = sample(seq(1,number_of_rows), 1)
+				theor_id = paste(LETTERS[new_col], new_row, sep = "")
+			}
+			mydata_new[new_row, new_col ] <- mydata_old[j,i]
+			mydata_new[j, i] <- mydata_old[new_row, new_col]
+			moved_already <- c(moved_already, theor_id)
+			moved_already <- c(moved_already, paste(LETTERS[i], j, sep = "") )
+			mydata_old <- mydata_new
+			#print(mydata_new)		
+		}
+	}
+}		
+		
+#####################
+
+# is the distriibution of original columns now more or less even in the new columns?
+
+cols_at_head <- substring( as.character(unlist(mydata_new[,c(1,2,3)])), 1, 1)
+cols_at_tail <- substring( as.character(unlist(mydata_new[,c(number_of_columns-2,number_of_columns-1,number_of_columns)])), 1, 1)
+
+cnt_head = length( cols_at_head[cols_at_head %in% c("A","B","C")] )
+cnt_tail = length( cols_at_tail[cols_at_tail %in% c("A","B","C")] )
+
+print(c(cnt_head, cnt_tail))
+
+
+# export as a PDF
+
+library(gridExtra)
+pdf("pot_positions_randomized.pdf", height=11, width=10)
+grid.table(mydata_new)
+dev.off()
+
+
