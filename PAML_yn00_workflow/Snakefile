@@ -1,0 +1,62 @@
+
+import os
+
+all_pairs = [x.strip(".fa") for x in os.listdir("unaligned_CDS")]
+tooldir="/users/mscharma/plantevo/tools"
+
+rule all:
+	input:
+		expand( "aligned_CDS/{ID}.CDS.aln", ID=all_pairs)
+
+rule prequal_align_backtranslate:
+	input:
+		"unaligned_CDS/{pair}.fa"
+	output:
+		"aligned_CDS/{pair}.CDS.aln"
+	shell:	
+		"""
+		tooldir=/users/mscharma/plantevo/tools
+				
+		# prequal
+		nseq=$(grep ">" {input} | wc -l )
+		if [ "$nseq" -gt 1 ]
+		then
+			prequal {input} || true
+			rm {input}.filtered.PP || true
+			rm {input}.translation || true
+			rm {input}.warning || true
+			cat {input}.filtered | sed 's/X\+//g' > {input}.pep.tmp && mv {input}.pep.tmp {input}.pep.preq || true
+			cat {input}.dna.filtered | sed 's/X\+//g' > {input}.cds.tmp && mv {input}.cds.tmp {input}.cds.preq || true
+			rm 	{input}.filtered || true
+			rm 	{input}.dna.filtered || true
+		else
+			python $tooldir/translate_CDS_to_PEP.py {input} || true
+			mv {input}.translated.fa {input}.pep.preq || true
+			cp {input} {input}.cds.preq || true
+		fi
+
+		# test outseq presence: in case prequal removed all sequences we ignore prequal and align the un-trimmed seqs anyway.
+		outseq=$( cat {input}.pep.preq | wc -l )
+		echo outseq $outseq
+		if [ "$outseq" -lt 1 ]
+		then
+			python $tooldir/translate_CDS_to_PEP.py {input} || true
+			mv {input}.translated.fa {input}.pep.preq || true
+			cp {input} {input}.cds.preq || true
+		fi	
+		
+		# align
+		mafft-linsi --genafpair --maxiterate 1000 --thread 1 {input}.pep.preq > {input}.PEP.aln || true
+		
+		# backtranslate
+		python $tooldir/backtranslate.py {input}.PEP.aln {input}.cds.preq || true
+		mv {input}.PEP.aln.backtranslated.aln {input}.FUFU || true
+		mv {input}.FUFU {output} || true
+		
+		# cleanup
+		rm {input}.cds.preq
+		rm {input}.PEP.aln
+		rm {input}.pep.preq
+		
+		"""
+

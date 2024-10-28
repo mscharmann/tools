@@ -1,4 +1,3 @@
-
 import sys
 
 def readfq(fp): # this is a generator function
@@ -36,4 +35,4 @@ def readfq(fp): # this is a generator function
 
 
 for name, seq, qual in readfq(sys.stdin):
-	sys.stdout.write( str(len(seq))+"\n" )
+	sys.stdout.write( str(len(seq)) + "\n" )

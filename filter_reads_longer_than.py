@@ -1,4 +1,3 @@
-
 import sys
 
 def readfq(fp): # this is a generator function

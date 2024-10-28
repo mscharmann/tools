@@ -1,0 +1,198 @@
+cd /users/mscharma/plantevo/Leucadendron/comp_sexchrom/estimate_dS.2022-12-09
+
+conda activate mol_evol
+######
+
+estimate dN, dS for gene-gene XLR and YLR genes and their closest paralogs. These pairs are: (from workflow.orthology_inference.2022-05.txt)
+
+#####
+
+chrY1794	chrX1320
+chrY1785	chrX1324
+chrY1784	chrX1325
+chrY1747	chrX1631
+chrY1730	chrX1744
+chrY1739	chrX1749
+chrY1756	chrX1751
+chrY1758	chrX1753
+chrY1759	chrX1754
+chrY1760	chrX1755
+chrY1761	chrX1756
+chrY1765	chrX1757
+chrY1766	chrX1758
+chrY1767	chrX1759
+chrY1769	chrX1760
+chrY1770	chrX1761
+chrY1777	chrX1762
+chrY1772	chrX1763
+chrY1796	chrX1765
+chrY1797	chrX1766
+chrY1740	chrX2309
+chrY1768	chrX854
+chrX1744	chrY1730
+chrX1749	chrY1739
+chrX1751	chrY1756
+chrX1753	chrY1758
+chrX1754	chrY1759
+chrX1755	chrY1760
+chrX1756	chrY1761
+chrX1757	chrY1765
+chrX1758	chrY1766
+chrX1759	chrY1767
+chrX1760	chrY1769
+chrX1761	chrY1770
+chrX1763	chrY1772
+chrX1762	chrY1777
+chrX1765	chrY1796
+chrX1766	chrY1797
+chrY1776	jg11861
+chrY1782	jg13499
+chrY1788	jg18394
+chrY1741	jg21322
+chrY1793	jg21451
+chrY1736	jg24263
+chrY1780	jg25022
+chrY1795	jg25901
+chrY1762	jg26759
+chrY1774	jg27886
+chrY1771	jg28061
+chrY1751	jg28252
+chrY1763	jg29804
+chrY1764	jg5328
+
+#########
+
+conda create --name mol_evol
+
+conda activate mol_evol
+conda install mafft seqtk paml gffread prequal snakemake
+
+#########
+
+#######
+1. get CDSs, extract seqs, align, filter columns for gaps while respecting CODON structure! (frameshifts might break it)
+2. PAML yn00
+#################
+
+# source of GFFs
+ln -s ../annotate_X_and_Y_haplotypes.2022-05/united_autosomes_and_X_and_Y/augustus.hints.autosomal.gtf
+ln -s ../annotate_X_and_Y_haplotypes.2022-05/united_autosomes_and_X_and_Y/augustus.hints.chrX.gtf
+ln -s ../annotate_X_and_Y_haplotypes.2022-05/united_autosomes_and_X_and_Y/augustus.hints.chrY.gtf
+
+ln -s ../annotate_X_and_Y_haplotypes.2022-05/united_autosomes_and_X_and_Y/autosomal.fa
+ln -s ../annotate_X_and_Y_haplotypes.2022-05/united_autosomes_and_X_and_Y/chrX.fa
+ln -s ../annotate_X_and_Y_haplotypes.2022-05/united_autosomes_and_X_and_Y/chrY.fa
+
+
+gffread -g chrX.fa -x chrX.cds augustus.hints.chrX.gtf
+gffread -g chrY.fa -x chrY.cds augustus.hints.chrY.gtf
+gffread -g autosomal.fa -x autosomal.cds augustus.hints.autosomal.gtf
+
+cat *.cds > all.cds
+rm chrX.cds chrY.cds autosomal.cds
+
+###
+python filter_longest_isoform.py all.cds
+
+
+ # below is adapted from: workflow.rubrum_XY_genes_mol_evol.2022-05.txt
+
+###########################
+# get the CDS
+###########################
+mkdir unaligned_CDS
+
+while read line ; do
+g1=$(echo $line | awk '{print $1}')
+g2=$(echo $line | awk '{print $2}')
+echo $g1 $g2
+samtools faidx all.cds.longest_isoform.fa $g1 > unaligned_CDS/pair_${g1}_${g2}.fa
+samtools faidx all.cds.longest_isoform.fa $g2 >> unaligned_CDS/pair_${g1}_${g2}.fa
+done <gene_pairs.txt
+
+
+
+###########################
+# filter and align
+###########################
+
+# Snakefile
+
+import os
+
+all_pairs = [x.strip(".fa") for x in os.listdir("unaligned_CDS")]
+tooldir="/users/mscharma/plantevo/tools"
+
+rule all:
+	input:
+		expand( "aligned_CDS/{ID}.CDS.aln", ID=all_pairs)
+
+rule prequal_align_backtranslate:
+	input:
+		"unaligned_CDS/{pair}.fa"
+	output:
+		"aligned_CDS/{pair}.CDS.aln"
+	shell:
+		"""
+		tooldir=/users/mscharma/plantevo/tools
+
+		# prequal
+		nseq=$(grep ">" {input} | wc -l )
+		if [ "$nseq" -gt 1 ]
+		then
+			prequal {input} || true
+			rm {input}.filtered.PP || true
+			rm {input}.translation || true
+			rm {input}.warning || true
+			cat {input}.filtered | sed 's/X\+//g' > {input}.pep.tmp && mv {input}.pep.tmp {input}.pep.preq || true
+			cat {input}.dna.filtered | sed 's/X\+//g' > {input}.cds.tmp && mv {input}.cds.tmp {input}.cds.preq || true
+			rm 	{input}.filtered || true
+			rm 	{input}.dna.filtered || true
+		else
+			python $tooldir/translate_CDS_to_PEP.py {input} || true
+			mv {input}.translated.fa {input}.pep.preq || true
+			cp {input} {input}.cds.preq || true
+		fi
+
+		# test outseq presence: in case prequal removed all sequences we ignore prequal and align the un-trimmed seqs anyway.
+		outseq=$( cat {input}.pep.preq | wc -l )
+		echo outseq $outseq
+		if [ "$outseq" -lt 1 ]
+		then
+			python $tooldir/translate_CDS_to_PEP.py {input} || true
+			mv {input}.translated.fa {input}.pep.preq || true
+			cp {input} {input}.cds.preq || true
+		fi
+
+		# align
+		mafft-linsi --genafpair --maxiterate 1000 --thread 1 {input}.pep.preq > {input}.PEP.aln || true
+
+		# backtranslate
+		python $tooldir/backtranslate.py {input}.PEP.aln {input}.cds.preq || true
+		mv {input}.PEP.aln.backtranslated.aln {input}.FUFU || true
+		mv {input}.FUFU {output} || true
+
+		# cleanup
+		rm {input}.cds.preq
+		rm {input}.PEP.aln
+		rm {input}.pep.preq
+
+		"""
+
+####
+
+snakemake --cores 4
+rm -r .snakemake
+
+
+########################
+# yn00
+########################
+
+cp ../rubrum_XY_genes_mol_evol.2022-05/run_yn00_for_DIR_of_alignments.py ./
+
+# nd run
+python run_yn00_for_DIR_of_alignments.py aligned_CDS/
+
+
+#####

@@ -6,8 +6,8 @@
 
 
 # specify dimensions of square grid
-number_of_rows = 14
-number_of_columns = 16
+number_of_rows = 100
+number_of_columns = 26
 
 
 # construct grid
@@ -33,8 +33,8 @@ mydata[,i] <- paste(LETTERS[i], mydata[,i], sep = "")
 moved_already <- c()
 mydata_old <- mydata
 mydata_new <- mydata
-for (i in seq(1,number_of_columns)) {
-	for (j in seq(1,number_of_rows)) {
+for (i in sample(seq(1,number_of_columns))) {
+	for (j in sample(seq(1,number_of_rows))) {
 		# only move away if not already moved away
 		if (!(mydata_old[j,i] %in% moved_already )) {
 			# only move to where no movement yet: draw possible targets until found one that has not been moved before.

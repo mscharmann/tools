@@ -1,7 +1,7 @@
 #!/usr/local/bin/python
-# Python 2.7.6
+# Python 3
 # vcf_to_phylip.py
-# 8 March 2014
+# 
 # Mathias Scharmann
 
 
@@ -16,6 +16,7 @@ takes vcf made by freebayes and outputs a variant matrix in phylip format
 
 import argparse
 import os
+import gzip
 
 ########################## HEAD
 
@@ -26,7 +27,7 @@ def extant_file(x):
 	"""
 	
 	if not os.path.exists(x):
-		print "Error: {0} does not exist".format(x)
+		print ("Error: {0} does not exist".format(x))
 		exit()
 	x = str(x)
 	return x
@@ -35,7 +36,7 @@ def extant_file(x):
 def linebreak_check(x):
 
 	if "\r" in open(x, "rb").readline():
-		print "Error: classic mac (CR) or DOS (CRLF) linebreaks in {0}".format(x)
+		print ("Error: classic mac (CR) or DOS (CRLF) linebreaks in {0}".format(x))
 		exit()
 
 ######
@@ -47,15 +48,8 @@ def get_commandline_arguments ():
 	
 	parser.add_argument("--vcf", required=True, type=extant_file,
 		help="name/path of vcf input file", metavar="FILE")
-# 	parser.add_argument("--format", required=True, help="the format of the vcf: stacks or freebayes")
-# 	
- 	args = parser.parse_args()
-# 	
-# 	if args.format not in ["stacks","freebayes"]:
-# 		print "--format value not accepted; must be 'stacks' or 'freebayes' "
-# 		exit()
-		
-	# finish
+	args = parser.parse_args()
+
 	return args
 
 ################################## CORE
@@ -63,15 +57,19 @@ def get_commandline_arguments ():
 
 def parse_vcf(vcf_file):
 	
-	
-	with open(vcf_file, "r") as INFILE:
-		for line in INFILE:
-			if line.startswith("##"):
-				continue
-			if line.startswith("#"):
-				header_line = line.lstrip("#").strip("\n").split("\t")	
-				print header_line
-				break
+
+	if vcf_file.endswith(".gz"):
+		INFILE = gzip.open(vcf_file, "rt")
+	else:
+		INFILE = open(vcf_file, "r")
+
+	for line in INFILE:
+		if line.startswith("##"):
+			continue
+		if line.startswith("#"):
+			header_line = line.lstrip("#").strip("\n").split("\t")	
+			print (header_line)
+			break
 	
 	samples = sorted(header_line[9:])
 
@@ -85,43 +83,45 @@ def parse_vcf(vcf_file):
 
 	samples_vcf_idx = {}
 	for sample in samples:
-		print sample
+		print (sample)
 		vcf_idx = header_line.index(sample)
 		samples_vcf_idx[sample] = vcf_idx
 #	print popdict_vcf_idx
 
 # now start the main business of walking through the vcf:	
 	out_columns = []
-	with open(vcf_file, "r") as INFILE:
-		
-		linecnt = 0
-		snpcnt = 0
-		for line in INFILE:
-			linecnt += 1
-			print linecnt, snpcnt
-			if line.startswith("#"):
-				continue
-			if len(line) < 2: # empty lines or so
-				continue
-			fields = line.strip("\n").split("\t")
-			if len(fields[3]) > 1:
-				continue # exclude variants that are not SNPs; theres no way to code those things in a phylip format!
+	if vcf_file.endswith(".gz"):
+		INFILE = gzip.open(vcf_file, "rt")
+	else:
+		INFILE = open(vcf_file, "r")
+	linecnt = 0
+	snpcnt = 0
+	for line in INFILE:
+		linecnt += 1
+		#print (linecnt, snpcnt)
+		if line.startswith("#"):
+			continue
+		if len(line) < 2: # empty lines or so
+			continue
+		fields = line.strip("\n").split("\t")
+		if len(fields[3]) > 1:
+			continue # exclude variants that are not SNPs; theres no way to code those things in a phylip format!
 			
-			snpcnt += 1
-			column = []
-			variants = [fields[3]] + fields[4].split(",") 
+		snpcnt += 1
+		column = []
+		variants = [fields[3]] + fields[4].split(",") 
 		
-			for sample in samples:
-				idxes = [int(x) for x in fields[samples_vcf_idx[sample]].split(":")[0].split("/") if not x == "." ]					
-				if len(idxes) > 0:
-					alleles = [variants[x] for x in idxes ]
-					# get IUPAC code if necessary (heterozygotes)
-					column.append( get_IUPAC_amb_code ( "".join(sorted(alleles)) ) )
-				else:
-					column.append("-")
-#			print column
+		for sample in samples:
+			idxes = [int(x) for x in fields[samples_vcf_idx[sample]].split(":")[0].split("/") if not x == "." ]					
+			if len(idxes) > 0:
+				alleles = [variants[x] for x in idxes ]
+				# get IUPAC code if necessary (heterozygotes)
+				column.append( get_IUPAC_amb_code ( "".join(sorted(alleles)) ) )
+			else:
+				column.append("-")
+#		print column
 			
-			out_columns.append(column)
+		out_columns.append(column)
 	
 	# columns to rows/lines:
 	outlines = []
@@ -172,6 +172,6 @@ args = 	get_commandline_arguments ()
 parse_vcf(args.vcf)
 
 	
-print "Done!"
+print ("Done!")
 	
 
