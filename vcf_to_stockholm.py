@@ -22,8 +22,7 @@ rapidnj bla.vcf.sth -n -o t -a kim -c 12 -m 10000 -t d -b 100 -x bla.vcf.sth.rap
 """
 
 
-import argparse
-import os
+import argparse, os, gzip
 
 ########################## HEAD
 
@@ -56,16 +55,21 @@ def get_commandline_arguments ():
 
 
 def parse_vcf(vcf_file):
+
+	if vcf_file.endswith(".gz"):
+		INFILE = gzip.open(vcf_file, "rt")
+	else:
+		INFILE = open(vcf_file)
 	
 	
-	with open(vcf_file, "r") as INFILE:
-		for line in INFILE:
-			if line.startswith("##"):
-				continue
-			if line.startswith("#"):
-				header_line = line.lstrip("#").strip("\n").split("\t")	
-				# print (header_line)
-				break
+	for line in INFILE:
+		if line.startswith("##"):
+			continue
+		if line.startswith("#"):
+			header_line = line.lstrip("#").strip("\n").split("\t")	
+			# print (header_line)
+			break
+	INFILE.close()
 	
 	samples = sorted(header_line[9:])
 
@@ -86,41 +90,47 @@ def parse_vcf(vcf_file):
 #	print popdict_vcf_idx
 
 # now start the main business of walking through the vcf:	
-	out_columns = []
-	with open(vcf_file, "r") as INFILE:
-		
-		linecnt = 0
-		snpcnt = 0
-		for line in INFILE:
-			linecnt += 1
-			if line.startswith("#"):
-				continue
-			if len(line) < 2: # empty lines or so
-				continue
-			fields = line.strip("\n").split("\t")
-			if len(fields[3]) > 1:
-				continue # exclude variants that are not SNPs; theres no way to code those things in a phylip format!
-			
-			snpcnt += 1
-#			column = []
-			column = ""			
-			variants = [fields[3]] + fields[4].split(",") 
-			# print progress every 10k sites  only
-			if (snpcnt / 10000.0).is_integer(): 
-				print ("processed " + str(snpcnt) + " SNPs")
+	if vcf_file.endswith(".gz"):
+		INFILE = gzip.open(vcf_file, "rt")
+	else:
+		INFILE = open(vcf_file)
 
-			for sample in samples:
-				idxes = [int(x) for x in fields[samples_vcf_idx[sample]].split(":")[0].split("/") if not x == "." ]					
-				if len(idxes) > 0:
-					alleles = [variants[x] for x in idxes ]
-					# get IUPAC code if necessary (heterozygotes)
-					# column.append( get_IUPAC_amb_code ( "".join(sorted(alleles)) ) )
-					column += get_IUPAC_amb_code ( "".join(sorted(alleles)) ) 
-				else:
-					#column.append("-")
-					column += "-"
+	out_columns = []
+
+	linecnt = 0
+	snpcnt = 0
+	for line in INFILE:
+		linecnt += 1
+		if line.startswith("#"):
+			continue
+		if len(line) < 2: # empty lines or so
+			continue
+		fields = line.strip("\n").split("\t")
+		if len(fields[3]) > 1:
+			continue # exclude variants that are not SNPs; theres no way to code those things in a phylip format!
 			
-			out_columns.append(column)
+		snpcnt += 1
+#		column = []
+		column = ""			
+		variants = [fields[3]] + fields[4].split(",") 
+		# print progress every 10k sites  only
+		if (snpcnt / 10000.0).is_integer(): 
+			print ("processed " + str(snpcnt) + " SNPs")
+			
+		for sample in samples:
+			idxes = [int(x) for x in fields[samples_vcf_idx[sample]].split(":")[0].split("/") if not x == "." ]					
+			if len(idxes) > 0:
+				alleles = [variants[x] for x in idxes ]
+				# get IUPAC code if necessary (heterozygotes)
+				# column.append( get_IUPAC_amb_code ( "".join(sorted(alleles)) ) )
+				column += get_IUPAC_amb_code ( "".join(sorted(alleles)) ) 
+			else:
+				#column.append("-")
+				column += "-"
+			
+		out_columns.append(column)
+	
+	INFILE.close()
 	
 	# columns to rows/lines:
 	outlines = []
