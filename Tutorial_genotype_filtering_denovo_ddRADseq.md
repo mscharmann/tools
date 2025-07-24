@@ -54,7 +54,8 @@ Puritz JB, Hollenbeck CM, Gold JR. 2014. dDocent: A RADseq, variant-calling pipe
 
 We want to maximise both the number of sites in the dataset and the number of individuals, but there is a trade-off.
 - To keep all sites (VCF rows) is only possible by throwing out any samples with missing genotypes; these can be most or even all samples.
-- To keep all samples (VCF columns) is only possible by throwing out any sites with missing genotyopes; these can be most or even all sites. 
+- To keep all samples (VCF columns) is only possible by throwing out any sites with missing genotyopes; these can be most or even all sites.
+ 
 The compromise is to throw out only the sites with unusually high missing genotypes, and those samples with unusually high missing genotypes. The end result should be a dataset that retains most sites and most samples, while the global proportion of missing data is not zero but acceptable. **Because one often does not know a priori what is "acceptable", it is good practice to produce several datasets with different missingness filtering, and explore how they perform in downstream analyses.** I recommend to explore both the high and low extremes of missingness and one intermediate dataset.
 
 
