@@ -168,6 +168,7 @@ vcftools --vcf step8.vcf --max-missing 1.0 --recode --recode-INFO-all --stdout >
 
 ## Useful helpers
 
+
 #### To count the missingness at genotype level from a VCF. This can be pasted into a terminal:
 ```
 vcf=XXX.vcf
