@@ -163,11 +163,12 @@ vcftools --vcf step8.vcf --max-missing 1.0 --recode --recode-INFO-all --stdout >
 
 ### DONE!
 
+**Question at the end: How much of the raw data has made it to the end, which steps remove most data?**
 
 
-## helper scripts
+## Useful helpers
 
-code to count the missingness at genotype level from a VCF. This can be pasted into a terminal.
+#### To count the missingness at genotype level from a VCF. This can be pasted into a terminal:
 ```
 vcf=XXX.vcf
 bcftools query -f '[%GT\t]\n' $vcf | \
@@ -187,7 +188,100 @@ END {
 }'
 ```
 
-count the number of SNPs retained (--mac 1 => minor allele count 1, i.e. invariants fail this filter)
+#### To count the number of SNPs retained (--mac 1 => minor allele count 1, i.e. invariants fail this filter):
 ```
 vcftools --vcf XXX.vcf --mac 1 
 ```
+
+
+#### To visualize the first N sites from a vcf with R. 
+- This needs a few R packages, can also be installed with conda like so: `conda install r-ggplot2 r-reshape2 r-vcfr`.
+- Create (maybe using `nano`) a file named `plot_genotypes.R` with the content below (chatgpt helped to make it).
+- Run it like so: `Rscript plot_genotypes.R raw.vcf 10000`
+
+```
+# ---- Load Required Packages ----
+suppressMessages(library(vcfR))
+suppressMessages(library(ggplot2))
+suppressMessages(library(reshape2))
+suppressMessages(library(tools))  # for file_path_sans_ext()
+
+# ---- Handle Command Line Arguments ----
+args <- commandArgs(trailingOnly = TRUE)
+if (length(args) < 1) {
+  stop("Usage: Rscript plot_genotypes.R <vcf_file.vcf[.gz]> [num_sites]", call. = FALSE)
+}
+
+vcf_file <- args[1]
+max_sites <- ifelse(length(args) >= 2, as.numeric(args[2]), 10000)
+if (is.na(max_sites) || max_sites < 1) stop("Second argument must be a positive integer.")
+
+# ---- Derive Output Filename ----
+base <- basename(vcf_file)
+base <- sub("\\.vcf(\\.gz)?$", "", base)
+output_png <- paste0(base, "_", max_sites, "_genotype_heatmap.png")
+
+# ---- Read VCF ----
+cat("Reading VCF:", vcf_file, "\n")
+vcf <- read.vcfR(vcf_file, verbose = FALSE)
+
+# ---- Filter to Biallelic Sites (Keep Monomorphic Too) ----
+biallelic_sites <- !grepl(",", vcf@fix[, "ALT"])  # exclude multi-allelics
+vcf <- vcf[biallelic_sites, ]
+
+# ---- Limit to First N Sites ----
+vcf <- vcf[1:min(nrow(vcf), max_sites), ]
+
+# ---- Extract Genotype Matrix ----
+gt <- extract.gt(vcf, element = "GT", as.numeric = FALSE)
+
+# ---- Convert GTs to Numeric ----
+convert_gt <- function(x) {
+  ifelse(x %in% c("0/0", "0|0"), 0,
+  ifelse(x %in% c("0/1", "1/0", "0|1", "1|0"), 1,
+  ifelse(x %in% c("1/1", "1|1"), 2, NA)))
+}
+gt_numeric <- apply(gt, c(1, 2), convert_gt)
+
+# ---- Reshape for ggplot ----
+gt_df <- melt(gt_numeric)
+colnames(gt_df) <- c("Site", "Sample", "Genotype")
+gt_df$Genotype <- as.factor(gt_df$Genotype)
+
+# ---- Plot ----
+p <- ggplot(gt_df, aes(x = Sample, y = Site, fill = Genotype)) +
+  geom_tile() +
+  scale_fill_manual(
+    values = c("0" = "blue", "1" = "purple", "2" = "red"),
+    na.value = "grey80",
+    name = "Genotype",
+    labels = c("HomRef", "Het", "HomAlt")
+  ) +
+  labs(
+    title = paste("Genotype Heatmap:", base, "-", nrow(gt_numeric), " sites"),
+    x = "Sample",
+    y = "Variant Site"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank()
+  )
+
+# ---- Save PNG ----
+ggsave(
+  filename = output_png,
+  plot = p,
+  width = 8.27,
+  height = 11.69,
+  dpi = 300,
+  units = "in"
+)
+
+cat("Genotype heatmap saved to", output_png, "\n")
+
+```
+
+
+
