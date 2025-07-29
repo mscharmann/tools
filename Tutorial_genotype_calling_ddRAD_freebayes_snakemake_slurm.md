@@ -10,7 +10,7 @@ Snakemake is a workflow management system, a tool that helps to automate, organi
 - for each sample, one BAM alignment file with ddRAD data, sorted and indexed (could be created by dDocent mapping step)
 - a text file that lists all the BAM files, may create like so: `ls Pop*.bam > bamlist.txt`
 - a fasta file with the reference assembly (ddRAD assembly with thousands of small contigs (could be created by dDocent assembly step) 
-- 
+
 
 ## 1. Create a conda environment
 ```
@@ -212,7 +212,7 @@ snakemake -j 100 --restart-times 3 --keep-going --rerun-incomplete --latency-wai
 ```
 Once this is running, sit back and detach from the tmux session, then check with `squeue` if Snakemake has actually submitted jobs/are they running? Come back after some time to check the progress.
 
-What this does (adjust as needed):
+What this does (adjust as needed, **you probably want to increase the job walltime!**):
 - `-j100` Snakemake will submit up to 100 jobs or jobs that together use 100 threads in parallel. Whether you actually get 100 parallel jobs depends on SLURM, however.
 - `--restart-times 3 --keep-going --rerun-incomplete` When a job fails, it will be re-attempted up to 3 times, the pipeline will continue anyway if possible, and previous output that was not complete will be repeated as well.
 - `--latency-wait 10` When an output is missing, Snakemake will wait 10 seconds until it declares the task failed. This is to account for slow disk I/O (writing/reading) or lag in networks
@@ -220,7 +220,7 @@ What this does (adjust as needed):
 - `--cluster-generic-submit-cmd "sbatch -t 01:00:00 -c 1 --mem=2G"` This is the SLURM command that Snakemake will use to send each job to the cluster for scheduling. It here asks for a walltime of 1h, 1 CPU per task, and 2GB of RAM. Adjust as needed, see SLURM syntax e.g. here: https://slurm.schedmd.com/quickstart.html or  https://www.hpc.uni-bayreuth.de/beginners/basic_control/
 
 ## 5. DONE!
-Check that Snakemake as successfully finished by inspecting the working directory/result VCF.
+Check that Snakemake has successfully finished by inspecting the working directory/result VCF.
 SLURM jobs will each produce a LOG file, which is mostly not relevant. Cleanup like so: `rm slurm*`
 
 
